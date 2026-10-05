@@ -26,6 +26,7 @@ const statLabels = [
   ["water", "Agua"],
   ["growth", "Crecimiento"]
 ];
+const LOCAL_DATA_POLL_INTERVAL_MS = 1000;
 const { DEFAULT_RELAY_URL, normalizeRelayUrl } = window.CompanionConfig;
 
 let socket = null;
@@ -345,7 +346,7 @@ async function startTracking() {
   elements.trackingBadge.classList.add("active");
   elements.trackingStatus.textContent = "Buscando la lectura local más reciente de Evrima…";
   await readLocalDinosaur();
-  if (reading) trackingTimer = window.setInterval(readLocalDinosaur, 2500);
+  if (reading) trackingTimer = window.setInterval(readLocalDinosaur, LOCAL_DATA_POLL_INTERVAL_MS);
 }
 
 function stopTracking() {
