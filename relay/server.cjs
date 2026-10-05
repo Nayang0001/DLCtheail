@@ -5,7 +5,6 @@ const { WebSocket, WebSocketServer } = require("ws");
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const MAX_MEMBERS = 12;
 const MIN_UPDATE_INTERVAL_MS = 900;
-const MAX_ROOM_AGE_MS = 12 * 60 * 60 * 1000;
 
 function createRoomCode() {
   let code = "";
@@ -104,7 +103,7 @@ function createRelayServer({ port = Number(process.env.PORT) || 8787, host = "0.
       type: "room:joined",
       roomCode,
       created,
-      members: Array.from(room.members.values()).filter((member) => member.stats)
+      members: Array.from(room.members.values())
     });
     for (const member of room.sockets) {
       if (member !== socket) send(member, { type: "player:joined", profile });
@@ -143,15 +142,14 @@ function createRelayServer({ port = Number(process.env.PORT) || 8787, host = "0.
         if (message.type === "room:create") {
           let roomCode = createRoomCode();
           while (rooms.has(roomCode)) roomCode = createRoomCode();
-          const room = { createdAt: Date.now(), members: new Map(), sockets: new Set() };
+          const room = { members: new Map(), sockets: new Set() };
           rooms.set(roomCode, room);
           attachToRoom(socket, roomCode, profile, room, true);
           return;
         }
         const roomCode = cleanText(message.roomCode, 8).toUpperCase();
         const room = rooms.get(roomCode);
-        if (!room || Date.now() - room.createdAt > MAX_ROOM_AGE_MS) {
-          rooms.delete(roomCode);
+        if (!room) {
           send(socket, { type: "error", code: "room_not_found", message: "No se encontró esa sala. Pide un código nuevo." });
           return;
         }

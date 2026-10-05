@@ -17,6 +17,7 @@ Cada jugador ejecuta su companion. El companion intenta leer la ventana seleccio
 
 ```powershell
 npm install
+npm install --prefix relay
 npm start
 ```
 
@@ -31,7 +32,7 @@ En la aplicación usa `ws://localhost:8787/ws`, crea una sala y comparte el cód
 ## Desplegar el relay en Railway
 
 1. Crea un proyecto Railway desde este repositorio.
-2. En Settings, configura **Root Directory** como `/relay`; así Railway instala únicamente las dependencias del relay y no Electron/OCR.
+2. En Settings, configura **Root Directory** como `/relay`; el paquete del relay tiene su propio `package.json` y lockfile, así que Railway instala solo sus dependencias, no Electron/OCR.
 3. El comando de inicio es `npm start` (también está definido en `relay/railway.json`).
 4. Railway asigna la variable `PORT`; el relay la utiliza automáticamente.
 5. Añade un dominio público al servicio.
