@@ -42,8 +42,8 @@ async function connect(url) {
 }
 
 test("validates SteamID64 format and bounded dinosaur stats", () => {
-  assert.deepEqual(validateProfile(profile("Rodri", "76561198000000000")), profile("Rodri", "76561198000000000"));
-  assert.equal(validateProfile(profile("Rodri", "1234")), null);
+  assert.deepEqual(validateProfile(profile("Host", "76561198000000000")), profile("Host", "76561198000000000"));
+  assert.equal(validateProfile(profile("Host", "1234")), null);
   assert.deepEqual(validateStats(validStats), validStats);
   assert.equal(validateStats({ ...validStats, health: 101 }), null);
   assert.equal(validateStats({ ...validStats, prime: "yes" }), null);
@@ -69,7 +69,7 @@ test("creates a private room and relays live member updates", async (t) => {
   });
 
   const roomCreated = nextMessage(host, (message) => message.type === "room:joined");
-  host.send(JSON.stringify({ type: "room:create", profile: profile("Rodri", "76561198000000000") }));
+  host.send(JSON.stringify({ type: "room:create", profile: profile("Host", "76561198000000000") }));
   const room = await roomCreated;
   assert.match(room.roomCode, /^[A-HJ-NP-Z2-9]{6}$/);
 
