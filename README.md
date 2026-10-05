@@ -27,7 +27,7 @@ En otra terminal puedes ejecutar el relay de prueba:
 npm run relay
 ```
 
-En la aplicación usa `ws://localhost:8787/ws`, crea una sala y comparte el código con tus amigos. Para probar desde otros equipos por Internet, despliega el relay usando los pasos de Railway y configura su URL `wss://.../ws`.
+En la aplicación, el relay desplegado en Railway viene configurado por defecto: crea una sala y comparte el código con tus amigos. Para probar el relay local, sustituye la URL por `ws://localhost:8787/ws`; al reiniciar, la URL local guardada vuelve automáticamente al relay de Railway.
 
 ## Desplegar el relay en Railway
 

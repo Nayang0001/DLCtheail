@@ -1,100 +1,123 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self'; connect-src 'self' ws: wss: https://tessdata.projectnaptha.com; worker-src 'self' blob:; font-src 'self' data:"
-    />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Evrima Pack Companion</title>
-    <link rel="stylesheet" href="./styles.css" />
-    <script defer src="../../node_modules/tesseract.js/dist/tesseract.min.js"></script>
-    <script defer src="./hud-parser.js"></script>
-    <script defer src="./app.js"></script>
-  </head>
-  <body>
-    <header class="topbar">
-      <div class="brand-mark">E</div>
-      <div class="brand-copy">
-        <strong>EVRIMA <span>PACK</span></strong>
-        <small>COMPANION</small>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self'; connect-src 'self' ws: wss: https://tessdata.projectnaptha.com; worker-src 'self' blob:; font-src 'self' data:" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evrima Pack Companion</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="../../node_modules/tesseract.js/dist/tesseract.min.js"></script>
+  <script defer src="./hud-parser.js"></script>
+  <script defer src="./app-config.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand-mark">E</div>
+    <div class="brand-copy">
+      <strong>EVRIMA <span>PACK</span></strong>
+      <small>COMPANION</small>
+    </div>
+    <div class="connection-state"><i id="connectionDot"></i><span id="connectionLabel">Desconectado</span></div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <p class="eyebrow">THE ISLE: EVRIMA · BETA</p>
+      <h1>Tu manada,<br /><span>en tiempo real.</span></h1>
+      <p class="intro-copy">Comparte el estado de tu dinosaurio con tus amigos. Cada jugador ejecuta su companion; la
+        sala es privada con un código de invitación.</p>
+    </section>
+
+    <section class="setup-grid">
+      <article class="panel profile-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">01 / IDENTIDAD</p>
+            <h2>Tu perfil</h2>
+          </div>
+          <span class="step-number">01</span>
+        </div>
+        <label for="playerName">Nombre en el grupo</label>
+        <input id="playerName" maxlength="32" autocomplete="nickname" placeholder="" />
+        <label for="steamId">SteamID64 <span class="optional">solo identificador</span></label>
+        <input id="steamId" inputmode="numeric" maxlength="17" placeholder="7656119…" />
+        <p class="hint">El SteamID escrito no verifica que seas el dueño de esa cuenta. Para esta beta identifica tu
+          tarjeta en la sala.</p>
+
+        <div class="divider"></div>
+        <div class="panel-heading compact">
+          <div>
+            <p class="eyebrow">02 / CONEXIÓN</p>
+            <h2>Únete a tu grupo</h2>
+          </div>
+        </div>
+        <label for="relayUrl">Servidor relay</label>
+        <input id="relayUrl" spellcheck="false" placeholder="wss://tu-relay.up.railway.app/ws" />
+        <p class="hint">Relay activo para esta beta: dlctheail-production.up.railway.app</p>
+        <div class="room-actions">
+          <button id="createRoom" class="button button-primary">Crear sala</button>
+          <div class="join-field">
+            <input id="roomCodeInput" maxlength="8" autocomplete="off" placeholder="CÓDIGO"
+              aria-label="Código de sala" />
+            <button id="joinRoom" class="button button-secondary">Unirme</button>
+          </div>
+        </div>
+        <div id="roomCard" class="room-card hidden">
+          <div><span class="hint">CÓDIGO PARA INVITAR</span><strong id="roomCode"></strong></div>
+          <button id="copyRoomCode" class="copy-button" title="Copiar código">COPIAR</button>
+        </div>
+      </article>
+
+      <article class="panel capture-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">03 / DATOS EN VIVO</p>
+            <h2>Tu dinosaurio</h2>
+          </div>
+          <span id="captureBadge" class="status-badge">SIN CAPTURA</span>
+        </div>
+        <p class="capture-copy">Selecciona la ventana del overlay que muestra tu HUD. El companion lee solamente el
+          dino, Prime, mutaciones y sus cinco valores.</p>
+        <div class="source-row">
+          <select id="screenSource" aria-label="Ventana o pantalla"></select>
+          <button id="refreshSources" class="icon-button" title="Actualizar ventanas">↻</button>
+        </div>
+        <div class="capture-controls">
+          <button id="startCapture" class="button button-primary" disabled>Iniciar lectura en vivo</button>
+          <button id="stopCapture" class="button button-secondary" disabled>Detener</button>
+        </div>
+        <div class="capture-preview">
+          <img id="screenPreview" alt="Vista previa del HUD seleccionado" />
+          <div id="previewPlaceholder" class="preview-placeholder"><span>⌗</span><small>La vista previa de la ventana
+              aparecerá aquí</small></div>
+        </div>
+        <p id="captureStatus" class="hint">La lectura OCR se procesa localmente. Al compartir, solo se envían los campos
+          visibles en la ficha.</p>
+        <p id="errorMessage" class="error-message hidden" role="alert"></p>
+      </article>
+    </section>
+
+    <section class="pack-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">04 / ESTADO COMPARTIDO</p>
+          <h2>Miembros de la sala <span id="memberCount">0</span></h2>
+        </div>
+        <span class="live-indicator"><i></i> ACTUALIZACIÓN EN VIVO</span>
       </div>
-      <div class="connection-state"><i id="connectionDot"></i><span id="connectionLabel">Desconectado</span></div>
-    </header>
-
-    <main>
-      <section class="intro">
-        <p class="eyebrow">THE ISLE: EVRIMA · BETA</p>
-        <h1>Tu manada,<br /><span>en tiempo real.</span></h1>
-        <p class="intro-copy">Comparte el estado de tu dinosaurio con tus amigos. Cada jugador ejecuta su companion; la sala es privada con un código de invitación.</p>
-      </section>
-
-      <section class="setup-grid">
-        <article class="panel profile-panel">
-          <div class="panel-heading">
-            <div><p class="eyebrow">01 / IDENTIDAD</p><h2>Tu perfil</h2></div>
-            <span class="step-number">01</span>
-          </div>
-          <label for="playerName">Nombre en el grupo</label>
-          <input id="playerName" maxlength="32" autocomplete="nickname" placeholder="Ej. Rodri" />
-          <label for="steamId">SteamID64 <span class="optional">solo identificador</span></label>
-          <input id="steamId" inputmode="numeric" maxlength="17" placeholder="7656119…" />
-          <p class="hint">El SteamID escrito no verifica que seas el dueño de esa cuenta. Para esta beta identifica tu tarjeta en la sala.</p>
-
-          <div class="divider"></div>
-          <div class="panel-heading compact">
-            <div><p class="eyebrow">02 / CONEXIÓN</p><h2>Únete a tu grupo</h2></div>
-          </div>
-          <label for="relayUrl">Servidor relay</label>
-          <input id="relayUrl" spellcheck="false" placeholder="wss://tu-relay.up.railway.app/ws" />
-          <p class="hint">Railway puede alojar el relay. Para probar en tu PC: ws://localhost:8787/ws</p>
-          <div class="room-actions">
-            <button id="createRoom" class="button button-primary">Crear sala</button>
-            <div class="join-field">
-              <input id="roomCodeInput" maxlength="8" autocomplete="off" placeholder="CÓDIGO" aria-label="Código de sala" />
-              <button id="joinRoom" class="button button-secondary">Unirme</button>
-            </div>
-          </div>
-          <div id="roomCard" class="room-card hidden">
-            <div><span class="hint">CÓDIGO PARA INVITAR</span><strong id="roomCode"></strong></div>
-            <button id="copyRoomCode" class="copy-button" title="Copiar código">COPIAR</button>
-          </div>
-        </article>
-
-        <article class="panel capture-panel">
-          <div class="panel-heading">
-            <div><p class="eyebrow">03 / DATOS EN VIVO</p><h2>Tu dinosaurio</h2></div>
-            <span id="captureBadge" class="status-badge">SIN CAPTURA</span>
-          </div>
-          <p class="capture-copy">Selecciona la ventana del overlay que muestra tu HUD. El companion lee solamente el dino, Prime, mutaciones y sus cinco valores.</p>
-          <div class="source-row">
-            <select id="screenSource" aria-label="Ventana o pantalla"></select>
-            <button id="refreshSources" class="icon-button" title="Actualizar ventanas">↻</button>
-          </div>
-          <div class="capture-controls">
-            <button id="startCapture" class="button button-primary" disabled>Iniciar lectura en vivo</button>
-            <button id="stopCapture" class="button button-secondary" disabled>Detener</button>
-          </div>
-          <div class="capture-preview">
-            <img id="screenPreview" alt="Vista previa del HUD seleccionado" />
-            <div id="previewPlaceholder" class="preview-placeholder"><span>⌗</span><small>La vista previa de la ventana aparecerá aquí</small></div>
-          </div>
-          <p id="captureStatus" class="hint">La lectura OCR se procesa localmente. Al compartir, solo se envían los campos visibles en la ficha.</p>
-          <p id="errorMessage" class="error-message hidden" role="alert"></p>
-        </article>
-      </section>
-
-      <section class="pack-section">
-        <div class="section-heading">
-          <div><p class="eyebrow">04 / ESTADO COMPARTIDO</p><h2>Miembros de la sala <span id="memberCount">0</span></h2></div>
-          <span class="live-indicator"><i></i> ACTUALIZACIÓN EN VIVO</span>
+      <div id="members" class="members-grid">
+        <div class="empty-state"><span>◌</span>
+          <p>Crea una sala o únete con un código.<br />Las fichas de tu manada aparecerán aquí.</p>
         </div>
-        <div id="members" class="members-grid">
-          <div class="empty-state"><span>◌</span><p>Crea una sala o únete con un código.<br />Las fichas de tu manada aparecerán aquí.</p></div>
-        </div>
-      </section>
-      <footer>Los valores se leen de la pantalla y pueden tener errores de OCR. No uses la beta como dato crítico.</footer>
-    </main>
-  </body>
+      </div>
+    </section>
+    <footer>Los valores se leen de la pantalla y pueden tener errores de OCR. No uses la beta como dato crítico.
+    </footer>
+  </main>
+</body>
+
 </html>

@@ -23,6 +23,7 @@ const elements = {
   memberCount: document.querySelector("#memberCount")
 };
 const { isComplete, measureHudBars, parseHudLines, statLabels } = window.HudParser;
+const { DEFAULT_RELAY_URL, normalizeRelayUrl } = window.CompanionConfig;
 
 let socket = null;
 let worker = null;
@@ -63,10 +64,11 @@ function loadSettings() {
     const settings = JSON.parse(localStorage.getItem("pack-companion-settings") || "{}");
     elements.name.value = settings.name || "";
     elements.steamId.value = settings.steamId || "";
-    elements.relayUrl.value = settings.relayUrl || "ws://localhost:8787/ws";
+    elements.relayUrl.value = normalizeRelayUrl(settings.relayUrl);
+    saveSettings();
   } catch (error) {
     console.error("Could not load saved settings:", error);
-    elements.relayUrl.value = "ws://localhost:8787/ws";
+    elements.relayUrl.value = DEFAULT_RELAY_URL;
   }
 }
 
