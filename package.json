@@ -7,10 +7,41 @@
   "scripts": {
     "start": "electron .",
     "relay": "npm --prefix relay start",
-    "test": "node --test"
+    "test": "node --test",
+    "dist": "electron-builder --win nsis"
   },
   "devDependencies": {
     "electron": "^37.2.0",
+    "electron-builder": "^26.0.12",
     "ws": "^8.18.3"
+  },
+  "build": {
+    "appId": "com.evrimapack.companion",
+    "productName": "Evrima Pack Companion",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "app/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Evrima Pack Companion"
+    }
   }
 }

@@ -10,8 +10,8 @@ Cada jugador ejecuta su companion. La app sondea los archivos TempData recientes
 ## Requisitos
 
 - Windows 10/11.
-- Node.js 20 o posterior.
 - The Isle: Evrima instalado para el usuario actual y un personaje cargado para que exista TempData reciente.
+- Node.js 20 o posterior solo es necesario para ejecutar desde el código fuente o crear el instalador; quienes instalen el `.exe` no necesitan Node.js.
 
 ## Ejecutar en desarrollo
 
@@ -20,6 +20,16 @@ npm install
 npm install --prefix relay
 npm start
 ```
+
+## Crear instalador para Windows
+
+Con las dependencias instaladas, ejecuta:
+
+```powershell
+npm run dist
+```
+
+El instalador NSIS x64 se genera en `release/`. Puedes compartir el archivo `.exe` con tus amigos; no necesitan instalar Node.js. Cada jugador sí necesita ejecutar The Isle: Evrima y usar su propia cuenta/perfil para que el companion pueda leer el TempData local. Windows puede mostrar una advertencia de SmartScreen porque el instalador no está firmado digitalmente.
 
 En otra terminal puedes ejecutar el relay de prueba:
 
