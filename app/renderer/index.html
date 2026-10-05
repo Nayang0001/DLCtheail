@@ -4,12 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self'; connect-src 'self' ws: wss: https://tessdata.projectnaptha.com; worker-src 'self' blob:; font-src 'self' data:" />
+    content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' ws: wss:; font-src 'self' data:" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Evrima Pack Companion</title>
   <link rel="stylesheet" href="./styles.css" />
-  <script defer src="../../node_modules/tesseract.js/dist/tesseract.min.js"></script>
-  <script defer src="./hud-parser.js"></script>
   <script defer src="./app-config.js"></script>
   <script defer src="./app.js"></script>
 </head>
@@ -27,9 +25,9 @@
   <main>
     <section class="intro">
       <p class="eyebrow">THE ISLE: EVRIMA · BETA</p>
-      <h1>Tu manada,<br /><span>en tiempo real.</span></h1>
-      <p class="intro-copy">Comparte el estado de tu dinosaurio con tus amigos. Cada jugador ejecuta su companion; la
-        sala es privada con un código de invitación.</p>
+      <h1>Tu manada,<br /><span>siempre conectada.</span></h1>
+      <p class="intro-copy">Comparte la última lectura local disponible de tu dinosaurio. Cada jugador ejecuta su
+        companion; la sala es privada con un código de invitación.</p>
     </section>
 
     <section class="setup-grid">
@@ -78,25 +76,18 @@
             <p class="eyebrow">03 / DATOS EN VIVO</p>
             <h2>Tu dinosaurio</h2>
           </div>
-          <span id="captureBadge" class="status-badge">SIN CAPTURA</span>
+          <span id="trackingBadge" class="status-badge">SEGUIMIENTO DETENIDO</span>
         </div>
-        <p class="capture-copy">Selecciona la ventana del overlay que muestra tu HUD. El companion lee solamente el
-          dino, Prime, mutaciones y sus cinco valores.</p>
-        <div class="source-row">
-          <select id="screenSource" aria-label="Ventana o pantalla"></select>
-          <button id="refreshSources" class="icon-button" title="Actualizar ventanas">↻</button>
-        </div>
+        <p class="capture-copy">Lee el archivo local TempData de Evrima, sin OCR ni capturas de pantalla. Cada jugador
+          debe ejecutar el companion y cargar su dinosaurio.</p>
         <div class="capture-controls">
-          <button id="startCapture" class="button button-primary" disabled>Iniciar lectura en vivo</button>
-          <button id="stopCapture" class="button button-secondary" disabled>Detener</button>
+          <button id="startTracking" class="button button-primary">Iniciar seguimiento local</button>
+          <button id="stopTracking" class="button button-secondary" disabled>Detener</button>
         </div>
-        <div class="capture-preview">
-          <img id="screenPreview" alt="Vista previa del HUD seleccionado" />
-          <div id="previewPlaceholder" class="preview-placeholder"><span>⌗</span><small>La vista previa de la ventana
-              aparecerá aquí</small></div>
-        </div>
-        <p id="captureStatus" class="hint">La lectura OCR se procesa localmente. Al compartir, solo se envían los campos
-          visibles en la ficha.</p>
+        <p id="trackingStatus" class="hint">Inicia el seguimiento y entra al juego. La actualización depende de cuándo
+          Evrima escriba el siguiente TempData; no necesariamente es instantánea.</p>
+        <p class="hint">TempData observado contiene dinosaurio, salud, comida, agua y crecimiento. Estamina, Prime y
+          mutaciones se mostrarán como no disponibles si no vienen en el archivo.</p>
         <p id="errorMessage" class="error-message hidden" role="alert"></p>
       </article>
     </section>
@@ -107,7 +98,7 @@
           <p class="eyebrow">04 / ESTADO COMPARTIDO</p>
           <h2>Miembros de la sala <span id="memberCount">0</span></h2>
         </div>
-        <span class="live-indicator"><i></i> ACTUALIZACIÓN EN VIVO</span>
+        <span class="live-indicator"><i></i> COMPARTIDO POR RELAY</span>
       </div>
       <div id="members" class="members-grid">
         <div class="empty-state"><span>◌</span>
@@ -115,7 +106,8 @@
         </div>
       </div>
     </section>
-    <footer>Los valores se leen de la pantalla y pueden tener errores de OCR. No uses la beta como dato crítico.
+    <footer>Se comparte únicamente la última lectura local disponible. La cadencia y precisión de los campos requieren
+      validación en juego; no uses la beta como dato crítico.
     </footer>
   </main>
 </body>

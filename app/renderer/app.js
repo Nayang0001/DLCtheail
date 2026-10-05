@@ -8,32 +8,36 @@ const elements = {
   roomCard: document.querySelector("#roomCard"),
   roomCode: document.querySelector("#roomCode"),
   copyRoomCode: document.querySelector("#copyRoomCode"),
-  screenSource: document.querySelector("#screenSource"),
-  refreshSources: document.querySelector("#refreshSources"),
-  startCapture: document.querySelector("#startCapture"),
-  stopCapture: document.querySelector("#stopCapture"),
-  preview: document.querySelector("#screenPreview"),
-  previewPlaceholder: document.querySelector("#previewPlaceholder"),
-  captureBadge: document.querySelector("#captureBadge"),
-  captureStatus: document.querySelector("#captureStatus"),
+  startTracking: document.querySelector("#startTracking"),
+  stopTracking: document.querySelector("#stopTracking"),
+  trackingBadge: document.querySelector("#trackingBadge"),
+  trackingStatus: document.querySelector("#trackingStatus"),
   error: document.querySelector("#errorMessage"),
   connectionDot: document.querySelector("#connectionDot"),
   connectionLabel: document.querySelector("#connectionLabel"),
   members: document.querySelector("#members"),
   memberCount: document.querySelector("#memberCount")
 };
-const { isComplete, measureHudBars, parseHudLines, statLabels } = window.HudParser;
+
+const statLabels = [
+  ["health", "Salud"],
+  ["stamina", "Estamina"],
+  ["hunger", "Hambre"],
+  ["water", "Agua"],
+  ["growth", "Crecimiento"]
+];
 const { DEFAULT_RELAY_URL, normalizeRelayUrl } = window.CompanionConfig;
 
 let socket = null;
-let worker = null;
-let captureTimer = null;
+let trackingTimer = null;
 let reading = false;
-let processingCapture = false;
+let readingLocalData = false;
 let profile = null;
 let lastStats = null;
+let lastSampleAgeMs = 0;
+let lastSampleReadAt = 0;
+let lastSourceVersion = null;
 let roomCode = null;
-let joinIntent = null;
 const members = new Map();
 
 function showError(message) {
@@ -103,7 +107,6 @@ function connectToRoom(intent, code = "") {
     profile = getProfile();
     const url = getRelayUrl();
     saveSettings();
-    joinIntent = { intent, code };
     const nextSocket = new WebSocket(url);
     socket = nextSocket;
     setConnection(false, "Conectando…");
@@ -134,8 +137,7 @@ function connectToRoom(intent, code = "") {
       members.clear();
       renderMembers();
       elements.roomCard.classList.add("hidden");
-      setConnection(false, "Desconectado");
-      if (reading) setConnection(false, "Lectura activa · desconectado");
+      setConnection(false, reading ? "Lectura activa · desconectado" : "Desconectado");
     });
   } catch (error) {
     showError(error.message);
@@ -152,14 +154,18 @@ function handleRelayMessage(message) {
       members.set(member.profile.steamId, member);
     }
     renderMembers();
-    if (lastStats) sendStats(lastStats);
+    if (lastStats) {
+      const currentAge = lastSampleAgeMs + Date.now() - lastSampleReadAt;
+      if (currentAge <= 180_000) sendStats(lastStats, Math.round(currentAge));
+    }
     return;
   }
   if (message.type === "player:update") {
     members.set(message.profile.steamId, {
       profile: message.profile,
       stats: message.stats,
-      updatedAt: message.updatedAt
+      updatedAt: message.updatedAt,
+      sourceUpdatedAt: message.sourceUpdatedAt
     });
     renderMembers();
     return;
@@ -178,6 +184,8 @@ function handleRelayMessage(message) {
     roomCode = null;
     members.clear();
     renderMembers();
+    elements.roomCard.classList.add("hidden");
+    setConnection(false, "Desconectado");
     return;
   }
   if (message.type === "error") {
@@ -188,9 +196,9 @@ function handleRelayMessage(message) {
   console.warn("Unrecognized relay message:", message.type);
 }
 
-function sendStats(stats) {
+function sendStats(stats, sourceAgeMs) {
   if (!socket || socket.readyState !== WebSocket.OPEN || !roomCode) return;
-  socket.send(JSON.stringify({ type: "player:update", stats }));
+  socket.send(JSON.stringify({ type: "player:update", stats, sourceAgeMs: Math.round(sourceAgeMs) }));
 }
 
 function renderMembers() {
@@ -233,7 +241,7 @@ function createMemberCard(member) {
   if (!member.stats) {
     const waiting = document.createElement("p");
     waiting.className = "hint";
-    waiting.textContent = "Esperando la primera lectura del HUD…";
+    waiting.textContent = "Esperando la primera lectura local de Evrima…";
     card.append(waiting);
     return card;
   }
@@ -243,8 +251,8 @@ function createMemberCard(member) {
   const species = document.createElement("strong");
   species.textContent = member.stats.species;
   const prime = document.createElement("span");
-  prime.className = `prime-badge${member.stats.prime ? "" : " not-prime"}`;
-  prime.textContent = member.stats.prime ? "PRIME" : "NO PRIME";
+  prime.className = `prime-badge${member.stats.prime === true ? "" : " not-prime"}`;
+  prime.textContent = member.stats.prime === null ? "N/D" : member.stats.prime ? "PRIME" : "NO PRIME";
   dino.append(species, prime);
   card.append(dino);
 
@@ -258,14 +266,16 @@ function createMemberCard(member) {
     const title = document.createElement("span");
     title.textContent = label;
     const value = document.createElement("b");
-    value.textContent = `${Math.round(member.stats[key])}%`;
+    const statValue = member.stats[key];
+    value.textContent = statValue === null ? "N/D" : `${Number(statValue.toFixed(2))}%`;
     line.append(title, value);
     const bar = document.createElement("div");
     bar.className = "bar";
     const fill = document.createElement("i");
-    fill.style.width = `${member.stats[key]}%`;
+    fill.style.width = statValue === null ? "0%" : `${statValue}%`;
     bar.append(fill);
     item.append(line, bar);
+    if (statValue === null) item.classList.add("stat-unavailable");
     stats.append(item);
   }
   card.append(stats);
@@ -274,177 +284,79 @@ function createMemberCard(member) {
   mutationLine.className = "mutations";
   const mutationTitle = document.createElement("strong");
   mutationTitle.textContent = "Mutaciones: ";
-  mutationLine.append(mutationTitle, document.createTextNode(member.stats.mutations.join(", ") || "Ninguna detectada"));
+  const mutationText = member.stats.mutations === null
+    ? "No disponibles en los datos locales"
+    : member.stats.mutations.join(", ") || "Ninguna";
+  mutationLine.append(mutationTitle, document.createTextNode(mutationText));
   card.append(mutationLine);
 
   const updated = document.createElement("div");
   updated.className = "updated";
-  const age = Math.max(0, Math.round((Date.now() - member.updatedAt) / 1000));
-  updated.textContent = age < 2 ? "Actualizado ahora" : `Actualizado hace ${age}s`;
+  if (Number.isInteger(member.sourceUpdatedAt)) {
+    const age = Math.max(0, Math.round((Date.now() - member.sourceUpdatedAt) / 1000));
+    updated.textContent = age < 2 ? "Lectura local: ahora" : `Lectura local: hace ${age}s`;
+  } else {
+    updated.textContent = "Esperando lectura local";
+  }
   card.append(updated);
   return card;
 }
 
-function readOcrLayout(data, scale = 1) {
-  const lines = [];
-  const words = [];
-  const scaleBox = (bbox) => bbox ? ({
-    x0: bbox.x0 / scale,
-    y0: bbox.y0 / scale,
-    x1: bbox.x1 / scale,
-    y1: bbox.y1 / scale
-  }) : null;
-  for (const block of data.blocks || []) {
-    for (const paragraph of block.paragraphs || []) {
-      for (const line of paragraph.lines || []) {
-        lines.push({ text: line.text, bbox: scaleBox(line.bbox) });
-        words.push(...(line.words || []).map((word) => ({
-          ...word,
-          bbox: scaleBox(word.bbox)
-        })));
-      }
-    }
-  }
-  return {
-    lines: lines.length ? lines : data.text.split(/\r?\n/).filter(Boolean),
-    words
-  };
-}
-
-async function prepareOcrImage(screenshot, scale = 2) {
-  const image = new Image();
-  await new Promise((resolve, reject) => {
-    image.onload = resolve;
-    image.onerror = () => reject(new Error("No se pudo preparar la captura para OCR."));
-    image.src = screenshot;
-  });
-  const canvas = document.createElement("canvas");
-  canvas.width = image.naturalWidth * scale;
-  canvas.height = image.naturalHeight * scale;
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (!context) throw new Error("No se pudo crear el lienzo local para el OCR.");
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  return {
-    dataUrl: canvas.toDataURL("image/png"),
-    pixels: context.getImageData(0, 0, image.naturalWidth, image.naturalHeight),
-    width: image.naturalWidth,
-    height: image.naturalHeight
-  };
-}
-
-async function loadScreenSources() {
-  clearError();
+async function readLocalDinosaur() {
+  if (!reading || readingLocalData) return;
+  readingLocalData = true;
   try {
-    const sources = await window.companion.listScreenSources();
-    const previous = elements.screenSource.value;
-    elements.screenSource.replaceChildren();
-    for (const source of sources) {
-      const option = document.createElement("option");
-      option.value = source.id;
-      option.textContent = source.name.slice(0, 90);
-      elements.screenSource.append(option);
-    }
-    if (sources.some((source) => source.id === previous)) elements.screenSource.value = previous;
-    elements.startCapture.disabled = sources.length === 0 || reading;
-    elements.captureStatus.textContent = sources.length
-      ? "Elige la ventana que muestra el panel activo de tu dinosaurio."
-      : "No se encontraron ventanas o pantallas disponibles.";
-  } catch (error) {
-    showError(`No se pudieron enumerar las ventanas: ${error.message}`);
-  }
-}
-
-function getWorker() {
-  if (!worker) {
-    worker = Tesseract.createWorker("eng+spa", 1, {
-      workerPath: new URL("../../node_modules/tesseract.js/dist/worker.min.js", location.href).href,
-      corePath: new URL("../../node_modules/tesseract.js-core", location.href).href,
-      langPath: "https://tessdata.projectnaptha.com/4.0.0",
-      logger: (event) => {
-        if (event.status === "recognizing text") {
-          elements.captureStatus.textContent = `Leyendo HUD… ${Math.round(event.progress * 100)}%`;
-        } else if (event.status === "loading language traineddata") {
-          elements.captureStatus.textContent = "Descargando datos de OCR (solo la primera vez)…";
-        }
-      }
-    });
-  }
-  return worker;
-}
-
-async function readHud() {
-  if (!reading || processingCapture || !elements.screenSource.value) return;
-  processingCapture = true;
-  try {
-    const screenshot = await window.companion.captureScreenSource(elements.screenSource.value);
-    elements.preview.src = screenshot;
-    elements.previewPlaceholder.classList.add("hidden");
-    const prepared = await prepareOcrImage(screenshot);
-    const ocr = await getWorker();
-    const result = await ocr.recognize(prepared.dataUrl, {}, { blocks: true });
-    const layout = readOcrLayout(result.data, 2);
-    const stats = parseHudLines(layout.lines, layout.words, {
-      leftPanelWidth: prepared.width * 0.18,
-      mutationMaxHeight: prepared.height * 0.8
-    });
-    const barStats = measureHudBars(prepared.pixels.data, prepared.width, prepared.height, layout.words);
-    for (const [key] of statLabels) {
-      if (stats[key] === null) stats[key] = barStats[key];
-    }
-    lastStats = stats;
-
-    const missing = statLabels.filter(([key]) => stats[key] === null).map(([, label]) => label);
-    if (!stats.species) missing.unshift("dinosaurio");
-    if (!isComplete(stats)) {
-      elements.captureStatus.textContent = `Esperando lectura completa: ${missing.join(", ")}. Mantén el panel del dino visible.`;
+    const snapshot = await window.companion.readLocalDinosaur();
+    if (!snapshot.available) {
+      elements.trackingStatus.textContent = snapshot.reason === "game-data-folder-missing"
+        ? "No encuentro los datos locales de Evrima. Comprueba que el juego esté instalado para este usuario."
+        : "Esperando TempData reciente. Entra a un servidor y carga tu dinosaurio.";
       return;
     }
+
+    lastStats = snapshot.stats;
+    lastSampleAgeMs = snapshot.ageMs;
+    lastSampleReadAt = Date.now();
+    const ageSeconds = Math.round(snapshot.ageMs / 1000);
     const sharing = socket?.readyState === WebSocket.OPEN && roomCode;
-    elements.captureStatus.textContent = `Detectado ${stats.species}${stats.prime ? " · Prime" : ""} · ${sharing ? "compartiendo" : "esperando sala"}`;
-    sendStats(stats);
-    const ownMember = members.get(profile?.steamId);
-    if (ownMember) {
-      ownMember.stats = stats;
-      ownMember.updatedAt = Date.now();
-      renderMembers();
+    elements.trackingStatus.textContent =
+      `${snapshot.stats.species} · lectura local de hace ${ageSeconds}s · ${sharing ? "compartiendo" : "esperando sala"}`;
+
+    if (snapshot.version !== lastSourceVersion) {
+      lastSourceVersion = snapshot.version;
+      sendStats(snapshot.stats, snapshot.ageMs);
     }
   } catch (error) {
-    console.error("HUD capture/OCR failed:", error);
-    elements.captureStatus.textContent = "Falló la captura o el OCR. Revisa permisos y conexión a Internet para descargar el modelo.";
-    showError(`No se pudo leer la ventana seleccionada: ${error.message}`);
+    console.error("Could not read Evrima local character data:", error);
+    elements.trackingStatus.textContent = "No se pudo leer TempData; se volverá a intentar.";
+    showError(`Falló la lectura local de Evrima: ${error.message}`);
   } finally {
-    processingCapture = false;
+    readingLocalData = false;
   }
 }
 
-async function startCapture() {
+async function startTracking() {
   if (reading) return;
-  if (!elements.screenSource.value) {
-    showError("Selecciona primero una ventana o pantalla.");
-    return;
-  }
   clearError();
   reading = true;
-  elements.startCapture.disabled = true;
-  elements.stopCapture.disabled = false;
-  elements.captureBadge.textContent = "LEYENDO";
-  elements.captureBadge.classList.add("active");
-  elements.captureStatus.textContent = "Preparando OCR local…";
-  await readHud();
-  if (reading) captureTimer = window.setInterval(readHud, 3500);
+  elements.startTracking.disabled = true;
+  elements.stopTracking.disabled = false;
+  elements.trackingBadge.textContent = "LEYENDO TEMPDATA";
+  elements.trackingBadge.classList.add("active");
+  elements.trackingStatus.textContent = "Buscando la lectura local más reciente de Evrima…";
+  await readLocalDinosaur();
+  if (reading) trackingTimer = window.setInterval(readLocalDinosaur, 2500);
 }
 
-async function stopCapture() {
+function stopTracking() {
   reading = false;
-  if (captureTimer) window.clearInterval(captureTimer);
-  captureTimer = null;
-  elements.startCapture.disabled = !elements.screenSource.value;
-  elements.stopCapture.disabled = true;
-  elements.captureBadge.textContent = "DETENIDO";
-  elements.captureBadge.classList.remove("active");
-  elements.captureStatus.textContent = "Lectura detenida. No se están compartiendo nuevas actualizaciones.";
+  if (trackingTimer) window.clearInterval(trackingTimer);
+  trackingTimer = null;
+  elements.startTracking.disabled = false;
+  elements.stopTracking.disabled = true;
+  elements.trackingBadge.textContent = "DETENIDO";
+  elements.trackingBadge.classList.remove("active");
+  elements.trackingStatus.textContent = "Seguimiento detenido; no se comparten nuevas lecturas.";
 }
 
 elements.name.addEventListener("change", saveSettings);
@@ -471,15 +383,8 @@ elements.copyRoomCode.addEventListener("click", async () => {
     showError(`No se pudo copiar el código: ${error.message}`);
   }
 });
-elements.refreshSources.addEventListener("click", loadScreenSources);
-elements.screenSource.addEventListener("change", () => {
-  elements.startCapture.disabled = !elements.screenSource.value || reading;
-  elements.preview.src = "";
-  elements.previewPlaceholder.classList.remove("hidden");
-});
-elements.startCapture.addEventListener("click", startCapture);
-elements.stopCapture.addEventListener("click", stopCapture);
+elements.startTracking.addEventListener("click", startTracking);
+elements.stopTracking.addEventListener("click", stopTracking);
 
 loadSettings();
 renderMembers();
-loadScreenSources();

@@ -38,14 +38,15 @@ function validateStats(value) {
   if (!value || typeof value !== "object") return null;
   const percentage = (item) =>
     typeof item === "number" && Number.isFinite(item) && item >= 0 && item <= 100;
-  const mutations = Array.isArray(value.mutations)
-    ? value.mutations.slice(0, 12).map((item) => cleanText(item, 48)).filter(Boolean)
-    : [];
+  const mutations = value.mutations === null
+    ? null
+    : Array.isArray(value.mutations)
+      ? value.mutations.slice(0, 12).map((item) => cleanText(item, 48)).filter(Boolean)
+      : undefined;
   const species = cleanText(value.species, 40);
-  if (!species || typeof value.prime !== "boolean") return null;
-  for (const key of ["health", "stamina", "hunger", "water", "growth"]) {
-    if (!percentage(value[key])) return null;
-  }
+  if (!species || (value.prime !== null && typeof value.prime !== "boolean") || mutations === undefined) return null;
+  if (!percentage(value.health) || !percentage(value.hunger) || !percentage(value.water) || !percentage(value.growth)) return null;
+  if (value.stamina !== null && !percentage(value.stamina)) return null;
   return {
     species,
     prime: value.prime,
@@ -160,7 +161,8 @@ function createRelayServer({ port = Number(process.env.PORT) || 8787, host = "0.
       if (message.type === "player:update") {
         const room = socket.roomCode && rooms.get(socket.roomCode);
         const stats = validateStats(message.stats);
-        if (!room || !stats) {
+        const sourceAgeMs = message.sourceAgeMs;
+        if (!room || !stats || !Number.isInteger(sourceAgeMs) || sourceAgeMs < 0 || sourceAgeMs > 180_000) {
           send(socket, { type: "error", code: "invalid_stats", message: "No se pudieron validar los datos del dinosaurio." });
           return;
         }
@@ -174,12 +176,14 @@ function createRelayServer({ port = Number(process.env.PORT) || 8787, host = "0.
         }
         member.stats = stats;
         member.updatedAt = now;
+        member.sourceUpdatedAt = now - sourceAgeMs;
         for (const recipient of room.sockets) {
           send(recipient, {
             type: "player:update",
             profile: socket.profile,
             stats,
-            updatedAt: now
+            updatedAt: now,
+            sourceUpdatedAt: member.sourceUpdatedAt
           });
         }
         return;

@@ -6,10 +6,10 @@ const { createRelayServer, validateProfile, validateStats } = require("../relay/
 const profile = (name, steamId) => ({ name, steamId });
 const validStats = {
   species: "Allosaurus",
-  prime: true,
-  mutations: [],
+  prime: null,
+  mutations: null,
   health: 100,
-  stamina: 96,
+  stamina: null,
   hunger: 88,
   water: 92,
   growth: 25
@@ -83,9 +83,13 @@ test("creates a private room and relays live member updates", async (t) => {
 
   const hostUpdate = nextMessage(host, (message) => message.type === "player:update" && message.profile.name === "Friend");
   const friendUpdate = nextMessage(friend, (message) => message.type === "player:update" && message.profile.name === "Friend");
-  friend.send(JSON.stringify({ type: "player:update", stats: validStats }));
-  assert.deepEqual((await hostUpdate).stats, validStats);
-  assert.deepEqual((await friendUpdate).stats, validStats);
+  friend.send(JSON.stringify({ type: "player:update", stats: validStats, sourceAgeMs: 1000 }));
+  const relayedToHost = await hostUpdate;
+  const relayedToFriend = await friendUpdate;
+  assert.deepEqual(relayedToHost.stats, validStats);
+  assert.deepEqual(relayedToFriend.stats, validStats);
+  assert.ok(Number.isInteger(relayedToHost.sourceUpdatedAt));
+  assert.ok(Date.now() - relayedToHost.sourceUpdatedAt >= 1000);
 
   const outsider = await connect(url);
   clients.push(outsider);
