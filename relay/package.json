@@ -1,0 +1,13 @@
+{
+  "name": "@evrima-pack/relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WebSocket relay for private Evrima Pack Companion rooms.",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

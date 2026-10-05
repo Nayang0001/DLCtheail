@@ -1,0 +1,21 @@
+{
+  "name": "evrima-pack-companion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Companion desktop app for sharing The Isle: Evrima HUD stats with a private group.",
+  "main": "app/main.cjs",
+  "workspaces": [
+    "relay"
+  ],
+  "scripts": {
+    "start": "electron .",
+    "relay": "npm run start --workspace @evrima-pack/relay",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "tesseract.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0"
+  }
+}

@@ -1,0 +1,103 @@
+:root {
+  color-scheme: dark;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  color: #ecf2f6;
+  background: #0b1016;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --muted: #82909b;
+  --line: #26313a;
+  --panel: #111920;
+  --accent: #f0a72f;
+  --green: #32c68a;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 820px; background: radial-gradient(ellipse at 80% 0%, #18232b 0, #0b1016 55%); }
+button, input, select { font: inherit; }
+.topbar { height: 64px; padding: 0 36px; border-bottom: 1px solid #26313a; display: flex; align-items: center; gap: 12px; background: #0b1117dd; }
+.brand-mark { display: grid; place-items: center; width: 28px; height: 28px; color: var(--accent); border: 1px solid #7f5a24; border-radius: 8px; font-weight: 800; }
+.brand-copy { display: flex; flex-direction: column; line-height: 1.1; letter-spacing: .09em; font-size: 11px; }
+.brand-copy span { color: var(--accent); }
+.brand-copy small { margin-top: 4px; color: var(--muted); font: 9px "DM Mono", monospace; letter-spacing: .17em; }
+.connection-state { margin-left: auto; display: flex; align-items: center; gap: 8px; color: #aab6bf; font: 11px "DM Mono", monospace; }
+.connection-state i, .live-indicator i { width: 7px; height: 7px; background: #64727d; border-radius: 50%; }
+.connection-state.connected i, .live-indicator i { background: var(--green); box-shadow: 0 0 10px #32c68a88; }
+main { max-width: 1250px; margin: auto; padding: 32px 36px 24px; }
+.intro { margin: 5px 0 26px; }
+.eyebrow { margin: 0 0 9px; color: var(--accent); font: 10px "DM Mono", monospace; letter-spacing: .14em; }
+h1 { margin: 0; font-size: clamp(31px, 4vw, 43px); line-height: 1.08; letter-spacing: -.045em; }
+h1 span { color: #95a4ad; }
+.intro-copy { max-width: 590px; margin: 12px 0 0; color: #a4b0b9; font-size: 13px; line-height: 1.65; }
+.setup-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 16px; align-items: stretch; }
+.panel { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg, #151e26, #10171d); box-shadow: 0 14px 40px #0002; }
+.panel-heading { display: flex; align-items: start; justify-content: space-between; margin-bottom: 18px; }
+.panel-heading h2, .section-heading h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
+.step-number { color: #51606a; font: 20px "DM Mono", monospace; }
+.compact { margin: 0 0 12px; }
+label { display: block; margin: 13px 0 6px; color: #b9c4cb; font-size: 11px; font-weight: 700; }
+.optional { margin-left: 5px; color: #72808b; font-size: 10px; font-weight: 400; }
+input, select { width: 100%; min-height: 38px; padding: 0 11px; color: #edf2f5; background: #0b1117; border: 1px solid #2a3740; border-radius: 7px; outline: none; font-size: 12px; }
+input:focus, select:focus { border-color: #b17e2e; box-shadow: 0 0 0 2px #f0a72f1c; }
+input::placeholder { color: #65737d; }
+.hint { color: #82909b; font-size: 10px; line-height: 1.5; }
+.divider { height: 1px; margin: 17px 0; background: var(--line); }
+.room-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 14px; }
+.join-field { display: flex; gap: 6px; }
+.join-field input { min-width: 0; text-transform: uppercase; }
+.button { min-height: 37px; padding: 0 12px; border: 1px solid transparent; border-radius: 7px; cursor: pointer; font-size: 11px; font-weight: 800; transition: .15s ease; }
+.button:disabled { opacity: .42; cursor: not-allowed; }
+.button-primary { color: #17130d; background: var(--accent); }
+.button-primary:not(:disabled):hover { background: #ffc45d; }
+.button-secondary { color: #d0d9df; background: #1a252d; border-color: #2d3a44; }
+.button-secondary:not(:disabled):hover { background: #22303a; }
+.room-card { display: flex; align-items: center; justify-content: space-between; margin-top: 13px; padding: 10px 12px; border: 1px solid #554426; border-radius: 8px; background: #211c14; }
+.room-card div { display: flex; flex-direction: column; gap: 4px; }
+.room-card strong { color: #ffd078; font: 20px "DM Mono", monospace; letter-spacing: .18em; }
+.copy-button, .icon-button { color: #edb448; background: transparent; border: 0; cursor: pointer; font: 10px "DM Mono", monospace; }
+.capture-copy { margin: -6px 0 12px; color: #9caab3; font-size: 11px; line-height: 1.5; }
+.status-badge { padding: 5px 8px; color: #82909b; border: 1px solid #36434c; border-radius: 5px; font: 9px "DM Mono", monospace; }
+.status-badge.active { color: #6de2af; border-color: #24744f; background: #10271e; }
+.source-row { display: flex; align-items: center; gap: 6px; }
+.source-row select { flex: 1; }
+.icon-button { width: 36px; height: 36px; border: 1px solid #2a3740; border-radius: 7px; font-size: 20px; }
+.capture-controls { display: flex; gap: 8px; margin-top: 9px; }
+.capture-preview { position: relative; display: grid; place-items: center; height: 122px; margin-top: 12px; overflow: hidden; border: 1px solid #27333b; border-radius: 8px; background: #0a0f14; }
+.capture-preview img { width: 100%; height: 100%; object-fit: contain; }
+.preview-placeholder { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #64737e; font-size: 10px; }
+.preview-placeholder span { color: #637985; font-size: 28px; }
+.capture-preview img[src=""] { display: none; }
+.capture-panel > .hint { margin-bottom: 0; }
+.error-message { padding: 8px 10px; color: #ff9a8e; border: 1px solid #693934; border-radius: 6px; background: #281816; font-size: 11px; }
+.pack-section { margin-top: 25px; }
+.section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 12px; }
+.section-heading h2 { display: flex; align-items: center; gap: 8px; }
+#memberCount { padding: 2px 7px; color: #aebcc4; border: 1px solid #34414a; border-radius: 12px; font: 10px "DM Mono", monospace; }
+.live-indicator { display: flex; align-items: center; gap: 7px; color: #87959e; font: 9px "DM Mono", monospace; letter-spacing: .08em; }
+.members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.empty-state { grid-column: 1 / -1; display: flex; align-items: center; gap: 13px; min-height: 88px; padding: 18px; color: #84919a; border: 1px dashed #2a3740; border-radius: 10px; font-size: 11px; line-height: 1.55; }
+.empty-state span { color: #d49a34; font-size: 27px; }
+.member-card { min-width: 0; padding: 13px; border: 1px solid #2b3841; border-radius: 10px; background: #121a20; }
+.member-header { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.member-name { overflow: hidden; color: #f0f3f5; font-size: 12px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.member-id { margin-top: 3px; color: #687781; font: 9px "DM Mono", monospace; }
+.member-online { color: var(--green); font: 9px "DM Mono", monospace; }
+.dino-line { display: flex; align-items: center; justify-content: space-between; min-height: 26px; margin: 4px 0 9px; padding-bottom: 7px; border-bottom: 1px solid #28343d; }
+.dino-line strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.prime-badge { padding: 3px 6px; color: #ffc65a; border: 1px solid #705222; border-radius: 4px; font: 9px "DM Mono", monospace; }
+.prime-badge.not-prime { color: #85929a; border-color: #39444c; }
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 12px; }
+.stat-label { display: flex; justify-content: space-between; color: #81909a; font-size: 9px; }
+.stat-label b { color: #d9e0e4; font: 10px "DM Mono", monospace; }
+.bar { height: 3px; margin-top: 4px; overflow: hidden; border-radius: 3px; background: #29343b; }
+.bar i { display: block; height: 100%; background: #36bd91; }
+.stat:nth-child(2) .bar i { background: #48b5d8; }
+.stat:nth-child(3) .bar i { background: #eca94b; }
+.stat:nth-child(4) .bar i { background: #6299ee; }
+.stat:nth-child(5) .bar i { background: #aa7adb; }
+.mutations { margin-top: 9px; color: #a5b0b8; font-size: 9px; line-height: 1.5; }
+.mutations strong { color: #cfb173; font-weight: 700; }
+.updated { margin-top: 7px; color: #65737d; font: 9px "DM Mono", monospace; }
+.hidden { display: none !important; }
+footer { margin-top: 16px; color: #5e6b74; font-size: 9px; text-align: center; }
+@media (max-width: 920px) { main { padding: 24px 20px; } .topbar { padding: 0 20px; } .setup-grid { grid-template-columns: 1fr; } }
